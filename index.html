@@ -17,7 +17,7 @@
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">아이폰 패닉풀 진단</h1>
         </header>
         
-        <!-- 1. 기종 검색 (iPhone 17 시리즈 포함) -->
+        <!-- 1. 기종 검색 -->
         <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 mb-4">
             <div class="flex items-center gap-2 mb-2">
                 <span class="w-6 h-6 bg-slate-800 text-white text-xs font-bold rounded-full flex items-center justify-center">1</span>
@@ -104,11 +104,6 @@
     </footer>
 
     <script>
-        // =========================================================
-        // ⚠️ [중요] 아래 큰따옴표("") 사이에 새로 받은 AQ 키를 넣으세요!
-        // =========================================================
-        const API_KEY = "AQ.Ab8RN6J5mXNS3fTQnyvXbqqwLCsSv3xGU6VaRM3W6-5_zf2egw";
-
         let base64Image = "";
         let mimeType = "image/jpeg";
 
@@ -132,10 +127,6 @@
             if (!base64Image) { 
                 alert("패닉 로그 사진을 먼저 업로드해 주세요!"); 
                 return; 
-            }
-            if (API_KEY.includes("여기에") || !API_KEY.trim()) {
-                alert("구글 API 키를 코드에 넣어주세요!");
-                return;
             }
 
             const btn = document.getElementById('diagBtn');
@@ -164,24 +155,12 @@ ${selectedModel ? `[선택 기종: ${selectedModel}]` : ''}
 
 * 반드시 Apple 공식 수리 매뉴얼 및 iFixit 데이터 기반의 100% 검증된 팩트만 명시하라.`;
 
-            const cleanKey = API_KEY.trim();
-
             try {
-                // 2026년 최신 표준 gemini-2.0-flash 모델 적용
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`, {
+                // Vercel 내 안전 서버 API 호출
+                const response = await fetch('/api/diagnose', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-goog-api-key': cleanKey
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: prompt },
-                                { inline_data: { mime_type: mimeType, data: base64Image } }
-                            ]
-                        }]
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, mimeType, base64Image })
                 });
 
                 const data = await response.json();
@@ -189,12 +168,12 @@ ${selectedModel ? `[선택 기종: ${selectedModel}]` : ''}
                 if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
                     resultContent.innerText = data.candidates[0].content.parts[0].text;
                 } else if (data.error) {
-                    resultContent.innerText = `❌ API 오류 발생: ${data.error.message}`;
+                    resultContent.innerText = `❌ 오류 발생: ${typeof data.error === 'object' ? data.error.message : data.error}`;
                 } else {
                     resultContent.innerText = "❌ 이미지 분석에 실패했습니다. 사진 속 글자가 더 잘 보이게 찍어서 올려주세요.";
                 }
             } catch (err) {
-                resultContent.innerText = "❌ 통신 에러가 발생했습니다. API 키 또는 인터넷 연결 상태를 확인해 주세요.";
+                resultContent.innerText = "❌ 서버 통신 에러가 발생했습니다.";
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<span>⚡</span> 패닉 로그 진단 시작`;
