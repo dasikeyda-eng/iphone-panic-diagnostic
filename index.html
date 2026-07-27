@@ -17,15 +17,32 @@
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">아이폰 패닉풀 진단</h1>
         </header>
         
-        <!-- 1. 기종 검색 -->
+        <!-- 1. 기종 검색 (자동완성 드롭다운 기능 적용) -->
         <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 mb-4">
             <div class="flex items-center gap-2 mb-2">
                 <span class="w-6 h-6 bg-slate-800 text-white text-xs font-bold rounded-full flex items-center justify-center">1</span>
                 <label class="text-sm font-bold text-slate-800">기기 모델 검색 (선택사항)</label>
             </div>
             <div class="relative">
-                <input type="text" id="modelSearch" placeholder="🔍 모델 번호 입력 (예: 12, 14 Pro, SE)" 
+                <input type="text" id="modelSearch" list="iphoneModels" placeholder="🔍 모델 입력 (예: 12, 14 Pro, SE)" 
                        class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-700 focus:bg-white transition">
+                <datalist id="iphoneModels">
+                    <option value="iPhone SE (2nd/3rd Gen)"></option>
+                    <option value="iPhone XR"></option>
+                    <option value="iPhone XS / XS Max"></option>
+                    <option value="iPhone 11"></option>
+                    <option value="iPhone 11 Pro / 11 Pro Max"></option>
+                    <option value="iPhone 12 / 12 mini"></option>
+                    <option value="iPhone 12 Pro / 12 Pro Max"></option>
+                    <option value="iPhone 13 / 13 mini"></option>
+                    <option value="iPhone 13 Pro / 13 Pro Max"></option>
+                    <option value="iPhone 14 / 14 Plus"></option>
+                    <option value="iPhone 14 Pro / 14 Pro Max"></option>
+                    <option value="iPhone 15 / 15 Plus"></option>
+                    <option value="iPhone 15 Pro / 15 Pro Max"></option>
+                    <option value="iPhone 16 / 16 Plus"></option>
+                    <option value="iPhone 16 Pro / 16 Pro Max"></option>
+                </datalist>
             </div>
         </section>
 
@@ -58,7 +75,6 @@
                 <span>⚡</span> 패닉 로그 진단 시작
             </button>
 
-            <!-- 간결하게 정돈된 두 줄 설명 메시지 -->
             <div class="mt-3 text-center">
                 <p class="text-xs text-slate-500 leading-relaxed">
                     📄 Apple 공식 서비스 매뉴얼 및 iFixit 데이터 기반<br>
@@ -93,14 +109,17 @@
     </footer>
 
     <script>
-        // ⚠️ 아래 쌍따옴표 안에 구글 Gemini API 키를 넣어주세요!
-        const API_KEY = "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";
+        // ⚠️ 큰따옴표("") 사이에 본인의 Gemini API 키를 넣어주세요.
+        const API_KEY = "여기에_Gemini_API_키를_붙여넣으세요";
 
         let base64Image = "";
+        let mimeType = "image/jpeg";
 
         function previewImage(event) {
             const file = event.target.files[0];
             if (!file) return;
+            
+            mimeType = file.type || "image/jpeg";
             const reader = new FileReader();
             reader.onload = function(e) {
                 base64Image = e.target.result.split(',')[1];
@@ -118,7 +137,7 @@
                 return; 
             }
             if (API_KEY.includes("여기에")) {
-                alert("코드 116번째 줄에 Gemini API 키를 입력해 주세요!");
+                alert("API 키를 입력해 주세요!");
                 return;
             }
 
@@ -130,24 +149,26 @@
             btn.disabled = true;
             btn.innerHTML = `<span class="animate-spin">🔄</span> 정밀 분석 및 교차 검증 중...`;
             resultBox.classList.remove('hidden');
-            resultContent.innerHTML = `<p class="text-slate-400 text-center py-4">사진 속 패닉 로그 코드 읽는 중...<br>Apple 서비스 매뉴얼 및 iFixit 데이터 매칭 중입니다.</p>`;
+            resultContent.innerHTML = `<p class="text-slate-400 text-center py-4">사진 속 패닉 로그 코드 해석 중입니다...</p>`;
 
-            const prompt = `너는 아이폰 수리 전문 기사를 돕는 패닉풀 분석 AI다. 
-제공된 패닉풀 로그 사진을 엄격히 분석하여 다음 형식으로 답변하라:
+            const prompt = `너는 아이폰 전문 수리기사를 돕는 패닉풀 분석 AI다. 
+제공된 패닉풀(panic-full) 로그 사진에서 센서 오류 코드(예: Prs0, Mic2, Thermal 등) 및 panicString을 찾아 정밀 분석하라.
 ${selectedModel ? `[선택 기종: ${selectedModel}]` : ''}
 
-1. 🔍 **검증된 원인 코드 및 관련 부품**: (예: Prs0 - 기압센서/충전단자)
+구체적으로 다음 규격에 맞추어 답변하라:
+1. 🔍 **검증된 원인 코드 및 관련 부품**: (예: Prs0 - 기압센서/충전단자 패블릭 케이블)
 2. 🛠️ **점검 및 수리 우선순위**:
-   - 1순위 (가장 높은 확률):
+   - 1순위:
    - 2순위:
    - 3순위:
 3. 📖 **iFixit 가이드 요약 및 핵심 주의사항**:
    - 수리 순서 요약:
-   - ⚠️ **핵심 주의사항**: (나사 길이 혼동 주의, 배터리 커넥터 선차단 등)
+   - ⚠️ **핵심 주의사항**: (Short screw damage 주의, 배터리 커넥터 선차단 필수 등)
 
 * 반드시 Apple 공식 수리 매뉴얼 및 iFixit 데이터 기반의 100% 검증된 팩트만 명시하라.`;
 
             try {
+                // v1beta 표준 Gemini API 호출
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -155,7 +176,7 @@ ${selectedModel ? `[선택 기종: ${selectedModel}]` : ''}
                         contents: [{
                             parts: [
                                 { text: prompt },
-                                { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+                                { inline_data: { mime_type: mimeType, data: base64Image } }
                             ]
                         }]
                     })
@@ -163,13 +184,15 @@ ${selectedModel ? `[선택 기종: ${selectedModel}]` : ''}
 
                 const data = await response.json();
                 
-                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
                     resultContent.innerText = data.candidates[0].content.parts[0].text;
+                } else if (data.error) {
+                    resultContent.innerText = `❌ API 오류가 발생했습니다: ${data.error.message}`;
                 } else {
-                    resultContent.innerText = "❌ 사진을 읽을 수 없거나 분석에 실패했습니다. 사진을 더 밝고 선명하게 찍어주세요.";
+                    resultContent.innerText = "❌ 이미지 분석에 실패했습니다. 사진 속 패닉풀 글씨가 더 잘 보이게 촬영 후 다시 시도해 주세요.";
                 }
             } catch (err) {
-                resultContent.innerText = "❌ 진단 도중 네트워크 오류가 발생했습니다. API 키를 다시 확인해 주세요.";
+                resultContent.innerText = "❌ 통신 에러가 발생했습니다. API 키 또는 인터넷 연결 상태를 확인해 주세요.";
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<span>⚡</span> 패닉 로그 진단 시작`;
